@@ -1,12 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+import { ProvideAuth } from './helpers/use-auth';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+import './styles/index.css';
+import 'materialize-css/dist/css/materialize.min.css';
+
+import M from 'materialize-css';
+M.AutoInit();
+
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <ProvideAuth>
+      <App />
+    </ProvideAuth>
   </React.StrictMode>,
   document.getElementById('root')
 );
