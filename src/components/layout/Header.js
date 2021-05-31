@@ -20,6 +20,8 @@ export default function Header({
               fontWeight: 'bold',
               fontSize: '1.2em',
               textAlign: 'center',
+              margin: '0px',
+              marginTop: '10px',
             }}
           >
             {subtitle}

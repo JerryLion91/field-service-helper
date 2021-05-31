@@ -41,6 +41,32 @@ export const useFirestore = () => {
   };
 
   /**
+   * phoneNumber model
+   */
+  class PhoneNumber {
+    constructor(calls, name, result) {
+      this.calls = calls;
+      this.name = name;
+      this.result = result;
+    }
+  }
+
+  // Firestore data converter
+  const phoneConverter = {
+    toFirestore: function (phoneData) {
+      return {
+        calls: phoneData.calls,
+        name: phoneData.name,
+        result: phoneData.result,
+      };
+    },
+    fromFirestore: function (snapshot, options) {
+      const data = snapshot.data(options);
+      return new PhoneNumber(data.calls, data.name, data.result);
+    },
+  };
+
+  /**
    * GET allUsers
    */
   const getAllUsers = async () => {
@@ -62,7 +88,6 @@ export const useFirestore = () => {
         .withConverter(userConverter)
         .get();
       if (dataUser.exists) {
-        // Convert to City object
         return dataUser.data();
       } else {
         console.log('No such document!');
@@ -91,6 +116,49 @@ export const useFirestore = () => {
     }
   };
   // end: GET getPhoneNumbersByUser
+
+  /**
+   *
+   * @param {String} uid
+   * @param {String} phoneNumber
+   */
+  const getPhoneNumberDetails = async (uid, phoneNumber) => {
+    try {
+      const phoneNumberDoc = await userColectionRef
+        .doc(uid)
+        .collection('phoneNumbers')
+        .doc(phoneNumber)
+        .withConverter(phoneConverter)
+        .get();
+      if (phoneNumberDoc.exists) {
+        return phoneNumberDoc.data();
+      } else {
+        console.log('No such document!');
+      }
+    } catch (error) {
+      console.log('Error getting phoneNumberDetails:', error);
+    }
+  };
+  // end: GET getPhoneNumberDetails
+
+  /**
+   *
+   * @param {String} uid
+   * @param {Number} phoneNumber
+   */
+  const updatePhoneDetails = async (uid, phoneNumber, data) => {
+    phoneNumber = phoneNumber.toString();
+    try {
+      userColectionRef
+        .doc(uid)
+        .collection('phoneNumbers')
+        .doc(phoneNumber)
+        .withConverter(phoneConverter)
+        .set(data);
+    } catch (error) {
+      console.log('Error updating phoneNumber:', error);
+    }
+  };
 
   /**
    *
@@ -149,6 +217,7 @@ export const useFirestore = () => {
    * @param {Number} numbers
    */
   const postNewNumberList = async (uid, firstNumber, numbers) => {
+    firstNumber = parseInt(firstNumber, 10);
     // Get a new write batch
     const batch = db.batch();
     const phoneNumbersColRef = userColectionRef
@@ -180,18 +249,25 @@ export const useFirestore = () => {
    *
    * @param {String} uid
    * @param {Number} phoneNumber
-   * @param {Object} call
+   * @param {Object} notes
    */
-  const addNewCall = async (uid, phoneNumber, call) => {
+  const addNewCall = async (uid, phoneNumber, formNotes) => {
     phoneNumber = phoneNumber.toString();
+    const { caller, notes } = formNotes;
     try {
-      const callsColRef = userColectionRef
+      const phoneNumberDocRef = userColectionRef
         .doc(uid)
         .collection('phoneNumbers')
-        .doc(phoneNumber)
-        .collection('calls');
+        .doc(phoneNumber);
+      await phoneNumberDocRef.update({
+        calls: firebase.firestore.FieldValue.increment(1),
+      });
       const dateNow = firebase.firestore.Timestamp.now();
-      const docRef = await callsColRef.add({ ...call, date: dateNow });
+      const docRef = await phoneNumberDocRef.collection('calls').add({
+        caller: caller,
+        notes: notes,
+        date: dateNow,
+      });
       return docRef.id;
     } catch (error) {
       console.log('Error posting newCall:', error);
@@ -202,6 +278,8 @@ export const useFirestore = () => {
     getAllUsers,
     getUserByUid,
     getPhoneNumbersByUser,
+    getPhoneNumberDetails,
+    updatePhoneDetails,
     getCallsByPhoneNumber,
     createUser,
     postNewNumberList,

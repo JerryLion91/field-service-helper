@@ -6,25 +6,28 @@ import Button from '../layout/Button';
 import Header from '../layout/Header';
 import Subtitle from '../layout/Subtitle';
 
-import AddPersonButton from '../AddPersonButton';
+import AddContactButton from '../AddContactButton';
 import SideBarMenu from '../SideBarMenu';
 
 import { useAuth } from '../../helpers/use-auth.js';
 import { useFirestore } from '../../helpers/use-firestore';
 import Loading from './Loading';
+import PhoneCard from '../layout/PhoneCard';
 
-import M from 'materialize-css';
+import { useHistory } from 'react-router-dom';
 
-export default function ManagePeople() {
+// import M from 'materialize-css';
+
+export default function ManagePeople({ setListToCall }) {
   const auth = useAuth();
-
+  const history = useHistory();
   const firestore = useFirestore();
   const [users, setUsers] = React.useState(null);
 
-  // const [state, setstate] = useState(initialState);
-
   const [searchValue, setSearchValue] = React.useState('');
   const handleInputChange = (newValue) => setSearchValue(newValue);
+
+  const [allPhoneNumbers, setAllPhoneNumbers] = React.useState(null);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -34,44 +37,40 @@ export default function ManagePeople() {
       // jerry.uid     === 'vweiFe8m2teiB6eWj6FwLCpgboH3'
 
       const phoneNumbers = await firestore.getPhoneNumbersByUser(
-        'DxH4TB6UOsc2fFmUPXO0T5TOLtL2'
+        dataUsers[0].uid
       );
-      console.log(phoneNumbers);
-
-      const calls = await firestore.getCallsByPhoneNumber(
-        'vweiFe8m2teiB6eWj6FwLCpgboH3',
-        11983031100
-      );
+      setAllPhoneNumbers(phoneNumbers);
     };
     fetchData();
   }, []);
 
-  React.useEffect(() => {
-    firestore.postNewNumberList(
-      'DxH4TB6UOsc2fFmUPXO0T5TOLtL2',
-      11983031100,
-      100
-    );
-    firestore.addNewCall('vweiFe8m2teiB6eWj6FwLCpgboH3', 11983031100, {
-      caller: 'Jeremias Leao',
-      notes: 'something',
-    });
-  }, []);
+  const handleCallList = () => {
+    setListToCall(allPhoneNumbers);
+    history.push('/calling');
+  };
 
   return (
     <>
-      {!users ? (
+      {!allPhoneNumbers ? (
         <Loading />
       ) : (
         <div className={'container'} style={{ maxWidth: '800px' }}>
           <Header title={'Ajudante de Servico'}>
-            <Button onClick={() => {}} icon="schedule" />
+            <Button
+              onClick={handleCallList}
+              icon="call"
+              classNames={'btn-flat'}
+            />
             <SideBarMenu />
           </Header>
           <FlexRow>
-            <AddPersonButton className="col s2" />
-            <Subtitle>Administrar Pessoas</Subtitle>
-            <Button onClick={() => {}} icon="filter_alt" className="col s2" />
+            <AddContactButton className="col s2" />
+            <Subtitle>Administrar Contatos</Subtitle>
+            <Button
+              onClick={() => {}}
+              icon="filter_alt"
+              className="col s2 btn-flat"
+            />
           </FlexRow>
           <Input
             className="input-field col s12"
@@ -83,7 +82,15 @@ export default function ManagePeople() {
           />
 
           <div className="col s12">
-            <div className="row"></div>
+            <div className="row">
+              {allPhoneNumbers.map((document, index) => {
+                return (
+                  <div key={index}>
+                    <PhoneCard document={document} />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

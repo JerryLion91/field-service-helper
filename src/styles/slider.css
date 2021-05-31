@@ -1,0 +1,114 @@
+.phoneNumber {
+  transition-duration: 1s;
+  opacity: 0;
+  font-weight: 500;
+  font-size: 20px;
+  height: 10vh;
+}
+.phoneNumber.prevCall {
+  transition-duration: 1s;
+  opacity: 0.3;
+  position: absolute;
+  left: calc(0%);
+  top: 0vh;
+}
+.phoneNumber.currCall {
+  transition-duration: 1s;
+  opacity: 1;
+  position: absolute;
+  left: calc(50% - 90px);
+  top: 5vh;
+  font-size: 30px;
+}
+.phoneNumber.nextCall {
+  transition-duration: 1s;
+  opacity: 0.3;
+  position: absolute;
+  left: calc(100% - 152px);
+  top: 15vh;
+}
+
+.SlideFromOut {
+  animation-duration: 700ms;
+  animation-name: slide-from-out;
+}
+@keyframes slide-from-out {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.3;
+  }
+}
+
+.SlideFromPrevToCurr {
+  animation-duration: 700ms;
+  animation-name: slide-from-prev-to-curr;
+}
+@keyframes slide-from-prev-to-curr {
+  from {
+    opacity: 0.3;
+    left: calc(0%);
+    top: 0vh;
+  }
+  to {
+    opacity: 1;
+    font-size: 30px;
+    left: calc(50% - 90px);
+    top: 5vh;
+  }
+}
+.SlideFromNextToCurr {
+  animation-duration: 700ms;
+  animation-name: slide-from-next-to-curr;
+}
+@keyframes slide-from-next-to-curr {
+  from {
+    opacity: 0.3;
+    font-size: 20px;
+    left: calc(100% - 152px);
+    top: 15vh;
+  }
+  to {
+    opacity: 1;
+    font-size: 30px;
+    left: calc(50% - 90px);
+    top: 5vh;
+  }
+}
+.SlideFromCurrToPrev {
+  animation-duration: 700ms;
+  animation-name: slide-from-curr-to-prev;
+}
+@keyframes slide-from-curr-to-prev {
+  from {
+    opacity: 1;
+    font-size: 30px;
+    left: calc(50% - 90px);
+    top: 5vh;
+  }
+  to {
+    opacity: 0.3;
+    font-size: 20px;
+    left: calc(0%);
+    top: 0vh;
+  }
+}
+.SlideFromCurrToNext {
+  animation-duration: 700ms;
+  animation-name: slide-from-curr-to-next;
+}
+@keyframes slide-from-curr-to-next {
+  from {
+    opacity: 1;
+    font-size: 30px;
+    left: calc(50% - 90px);
+    top: 5vh;
+  }
+  to {
+    opacity: 0.3;
+    font-size: 20px;
+    left: calc(100% - 152px);
+    top: 15vh;
+  }
+}

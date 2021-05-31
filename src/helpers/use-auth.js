@@ -38,6 +38,7 @@ function useProvideAuth() {
         var credential = response.credential;
 
         // This gives you a Google Access Token. You can use it to access the Google API.
+        // eslint-disable-next-line
         var token = credential.accessToken;
         // The signed-in user info.
         var user = response.user;
@@ -54,8 +55,10 @@ function useProvideAuth() {
         console.log(errorCode);
         console.log(errorMessage);
         // The email of the user's account used.
+        // eslint-disable-next-line
         const email = error.email;
         // The firebase.auth.AuthCredential type that was used.
+        // eslint-disable-next-line
         const credential = error.credential;
         // ...
       });
@@ -138,7 +141,7 @@ function useProvideAuth() {
     });
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, [firestore]);
 
   // Return the user object and auth methods
   return {

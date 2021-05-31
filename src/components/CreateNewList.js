@@ -1,74 +1,98 @@
 import React from 'react';
-import { Modal } from 'react-responsive-modal';
-import 'react-responsive-modal/styles.css';
-import '../styles/modalAnimation.css';
+import { fomattedPhoneNumber } from '../helpers/format';
+import { useFirestore } from '../helpers/use-firestore';
+import { useAuth } from '../helpers/use-auth.js';
 
-import { useAuth } from '../helpers/use-auth';
-import { Link } from 'react-router-dom';
+export default function CreateNewList({
+  setOpenModal,
+  setListToCall,
+  numberFormat,
+}) {
+  const { user } = useAuth();
+  const firestore = useFirestore();
 
-import Button from './layout/Button';
-
-export default function SideBarMenu() {
-  const auth = useAuth();
-
-  const [open, setOpen] = React.useState(false);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (user) {
+      firestore.postNewNumberList(user.uid, phoneNumber, 100);
+      setListToCall(list);
+      setOpenModal(false);
+    } else {
+      alert('You must be Logged');
+    }
+  };
+  const [phoneNumber, setPhoneNumber] = React.useState('');
 
   return (
-    <div>
-      <Button onClick={() => setOpen(true)} icon="menu" />
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        classNames={{
-          modalAnimationIn: 'customEnterModalAnimation',
-          modalAnimationOut: 'customLeaveModalAnimation',
-        }}
-        styles={{
-          modalContainer: {
-            left: '0px',
-            top: '0px',
-            height: '100%',
-            width: '100%',
-            position: 'relative',
-          },
-          modal: {
-            left: '0px',
-            top: '0px',
-            position: 'absolute',
-            margin: '0px',
-            height: '100vh',
-            width: '30vw',
-          },
-        }}
-        showCloseIcon={false}
-        animationDuration={600}
-      >
-        {auth ? (
-          <>
-            <div
-              style={{ backgroundColor: 'red', width: '100%', height: '3px' }}
-            >
-              <ul>
-                <li>
-                  <Link to="/">Home</Link>
-                </li>
-                <li>
-                  <Link to="/calling">Chamadas</Link>
-                </li>
-                <li>
-                  <Link to="/manage">Contatos</Link>
-                </li>
-              </ul>
-              {/* </nav>  */}
-            </div>
-          </>
-        ) : (
-          <></>
-        )}
-      </Modal>
-    </div>
+    <>
+      <h5>Adicionar Nova Lista</h5>
+      <form action="" onSubmit={handleSubmit}>
+        <p>
+          <label htmlFor="firstName">
+            First Number
+            <input
+              type="text"
+              value={phoneNumber}
+              onChange={({ target }) => {
+                setPhoneNumber(target.value);
+              }}
+            />
+          </label>
+        </p>
+        <input type="submit" value="Submit" />
+      </form>
+    </>
   );
 }
+
+const list = [
+  {
+    phoneNumber: '11983031100',
+    details: {
+      name: 'Lucas',
+      result: 'Option 1',
+      calls: 1,
+      callsArray: [
+        {
+          caller: 'Jeremias',
+          date: '',
+          notes: 'falei sobre uma coisa',
+        },
+      ],
+      timestamp: 'hoje',
+    },
+  },
+  {
+    phoneNumber: '11983031101',
+    details: {
+      name: '',
+      result: '',
+      calls: 2,
+      callsArray: [
+        {
+          caller: 'Jeremias',
+          date: '',
+          notes: 'falei sobre uma coisa',
+        },
+        {
+          caller: 'Jeremias',
+          date: '',
+          notes: 'falei sobre uma segunda coisa',
+        },
+      ],
+      timestamp: 'hoje',
+    },
+  },
+  {
+    phoneNumber: '11983031102',
+    details: {
+      name: '',
+      result: '',
+      calls: 0,
+      timestamp: 'hoje',
+    },
+  },
+];
 
 /**
  *   ModalReference

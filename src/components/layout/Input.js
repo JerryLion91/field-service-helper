@@ -14,6 +14,7 @@ export default function Input({
   id = 'inputFunction',
 }) {
   const [labelUp, setLabelUp] = React.useState(false);
+
   const checkValue = () => {
     if (value) {
       setLabelUp(true);
@@ -21,6 +22,10 @@ export default function Input({
       setLabelUp(false);
     }
   };
+  React.useEffect(() => {
+    checkValue();
+  }, [value]);
+
   return (
     <div className={`input-field ${className}`}>
       {icon && <i className="material-icons prefix">{icon}</i>}

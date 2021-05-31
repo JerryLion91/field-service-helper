@@ -1,134 +1,253 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import Button from '../layout/Button';
-import FlexRow from '../layout/FlexRow';
 import Header from '../layout/Header';
-import Input from '../layout/Input';
 import SideBarMenu from '../SideBarMenu';
 import Loading from './Loading';
-import M from 'materialize-css';
 
-export default function Calling({
-  numbersToCall = [11983031100, 11983031101, 11983031102, 11983031103],
-}) {
-  React.useEffect(() => {
-    const instances = M.FormSelect.init(document.querySelectorAll('select'));
-  }, []);
+import '../../styles/slider.css';
+import ReturnVisits from '../ReturnVisits';
+import NotesForm from '../NotesForm';
+import { useAuth } from '../../helpers/use-auth.js';
+import { useFirestore } from '../../helpers/use-firestore';
+import CreateNewList from '../CreateNewList';
+import { fomattedPhoneNumber } from '../../helpers/format';
+import { Modal } from 'react-responsive-modal';
+import 'react-responsive-modal/styles.css';
+// import '../styles/modalAnimation.css';
 
-  const formReducer = (state, action) => {
-    switch (action.type) {
-      case 'name':
-        return { ...state, name: action.value };
-      case 'select':
-        return { ...state, result: action.value };
-      case 'notes':
-        return { ...state, notes: action.value };
-      default:
-        throw new Error('formReducer');
+export default function Calling({ listToCall, setListToCall }) {
+  const { user } = useAuth();
+  const firestore = useFirestore();
+
+  const isListAnArray = Array.isArray(listToCall);
+
+  const [openModal, setOpenModal] = React.useState(!isListAnArray);
+
+  const [isLoading, setIsLoading] = React.useState(null);
+  const [currentCall, setCurrentCall] = React.useState(null);
+  const [returnVisits, setReturnVisits] = React.useState(null);
+  const [numberFormat, setNumberFormat] = React.useState('byFive');
+  /**
+   * Slider handler
+   */
+  const initSlides = (listToCall) => {
+    if (isListAnArray) {
+      const numbersToCall = listToCall.map((doc) => doc.phoneNumber);
+      return {
+        array: numbersToCall,
+        prevSlide: null,
+        currSlide: 0,
+        nextSlide: 1,
+        change: null,
+      };
+    } else {
+      setCurrentCall({
+        name: '',
+        result: '',
+        notes: '',
+      });
+      return {
+        array: ['00000000000'],
+        prevSlide: null,
+        currSlide: 0,
+        nextSlide: null,
+        change: null,
+      };
     }
   };
-  const [notes, dispatch] = React.useReducer(formReducer, {
-    name: '',
-    result: '',
-    notes: '',
-  });
-
-  const [listIndex, setListIndex] = React.useState(0);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(notes);
+  const handleSlideChange = (state, action) => {
+    const maxIndex = state.array.length - 1;
+    switch (action.type) {
+      case 'Next':
+        return {
+          ...state,
+          prevSlide: state.currSlide,
+          currSlide: state.nextSlide,
+          nextSlide: state.nextSlide === maxIndex ? null : state.nextSlide + 1,
+          change: 'Next',
+        };
+      case 'Prev':
+        return {
+          ...state,
+          prevSlide: state.prevSlide === 0 ? null : state.prevSlide - 1,
+          currSlide: state.prevSlide,
+          nextSlide: state.currSlide,
+          change: 'Prev',
+        };
+      case 'Reset':
+        return initSlides(action.payload);
+      default:
+        throw new Error();
+    }
   };
+  const [slides, dispatchSlideChange] = React.useReducer(
+    handleSlideChange,
+    listToCall,
+    initSlides
+  );
+
+  // end slider handler
+
+  /**
+   *
+   * @param {Object} changeType dispatchSlideChange object
+   * @param {Object} notes with .name, .result, .notes
+   */
+  const onPhoneNumberChange = async (changeType, notes) => {
+    if (currentCall) {
+      firestore
+        .updatePhoneDetails(
+          user.uid,
+          listToCall[slides.currSlide].phoneNumber,
+          currentCall
+        )
+        .then(() => {})
+        .catch((err) => {
+          console.error(err);
+        });
+    }
+    if (notes !== '') {
+      const callId = await firestore.addNewCall(
+        user.uid,
+        listToCall[slides.currSlide].phoneNumber,
+        {
+          caller: user.displayName,
+          notes: notes,
+        }
+      );
+      console.log(callId);
+    }
+    dispatchSlideChange(changeType);
+  };
+
+  const setupCurrentCall = async () => {
+    const currentNumber = listToCall[slides.currSlide].phoneNumber;
+    const phoneNumberDetails = await firestore.getPhoneNumberDetails(
+      user.uid,
+      currentNumber
+    );
+    const phoneNumberCalls = await firestore.getCallsByPhoneNumber(
+      user.uid,
+      currentNumber
+    );
+    setCurrentCall(phoneNumberDetails);
+    setReturnVisits(phoneNumberCalls);
+  };
+
+  React.useEffect(() => {
+    if (user) setupCurrentCall();
+  }, [slides]);
+
+  React.useEffect(() => {
+    dispatchSlideChange({ type: 'Reset', payload: listToCall });
+  }, [listToCall]);
 
   return (
     <>
-      {false ? (
+      {!currentCall ? (
         <Loading />
       ) : (
         <div className={'container'} style={{ maxWidth: '800px' }}>
-          <Header title={'Ajudante de Servico'}>
-            <Button onClick={() => {}} icon="schedule" />
+          <Modal open={openModal} onClose={() => setOpenModal(false)}>
+            <CreateNewList
+              setOpenModal={setOpenModal}
+              setListToCall={setListToCall}
+              numberFormat={numberFormat}
+            />
+          </Modal>
+          <Header subtitle={'Chamadas'}>
+            <Button
+              onClick={() => setOpenModal(true)}
+              icon="add"
+              classNames={'btn-flat'}
+            />
             <SideBarMenu />
           </Header>
-          <div>
-            <div style={{ textAlign: 'center' }}>
-              {listIndex === 0 ? '-' : numbersToCall[listIndex]}
-            </div>
-            <div style={{ textAlign: 'center' }}>activeNumber</div>
-            <div style={{ textAlign: 'center' }}>nextNumber</div>
-          </div>
-          <div className="row">
-            <form className="col s12" onSubmit={handleSubmit}>
-              <div className="row">
-                <Input
-                  className="input-field col s6"
-                  type="text"
-                  id="nameNote"
-                  label="Name"
-                  icon="account_circle"
-                  value={notes.name}
-                  onChange={(newName) =>
-                    dispatch({ type: 'name', value: newName })
-                  }
-                />
-                <div className="input-field col s6">
-                  <select
-                    name="selectNote"
-                    id="selectNote"
-                    value={notes.result}
-                    onChange={({ target }) =>
-                      dispatch({ type: 'select', value: target.value })
+          {/* Slider */}
+          <div
+            className={'container'}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'relative',
+              height: '25vh',
+              width: '100%',
+            }}
+          >
+            {slides.array.map((slide, index) => {
+              return (
+                <Fragment key={index}>
+                  {slides.prevSlide !== null && (
+                    <div
+                      className={
+                        index === slides.prevSlide && slides.change === 'Prev'
+                          ? 'phoneNumber prevCall SlideFromOut'
+                          : index === slides.prevSlide &&
+                            slides.change === 'Next'
+                          ? 'phoneNumber prevCall SlideFromCurrToPrev'
+                          : index === slides.prevSlide
+                          ? 'phoneNumber prevCall'
+                          : 'phoneNumber'
+                      }
+                    >
+                      {index === slides.prevSlide && (
+                        <p>{fomattedPhoneNumber(slide, numberFormat)}</p>
+                      )}
+                    </div>
+                  )}
+                  <div
+                    className={
+                      index === slides.currSlide && slides.change === 'Next'
+                        ? 'phoneNumber currCall SlideFromNextToCurr'
+                        : index === slides.currSlide && slides.change === 'Prev'
+                        ? 'phoneNumber currCall SlideFromPrevToCurr'
+                        : index === slides.currSlide
+                        ? 'phoneNumber currCall'
+                        : 'phoneNumber'
                     }
                   >
-                    <option value="" disabled>
-                      Choose your option
-                    </option>
-                    <option value="1">Option 1</option>
-                    <option value="2">Option 2</option>
-                    <option value="3">Option 3</option>
-                  </select>
-                  <label>Materialize Select</label>
-                </div>
-              </div>
-              <div className="row">
-                <div className="input-field col s12">
-                  <textarea
-                    id="textNotes"
-                    className="materialize-textarea"
-                    value={notes.notes}
-                    onChange={({ target }) =>
-                      dispatch({ type: 'notes', value: target.value })
-                    }
-                  />
-                  <label htmlFor="textNotes">Textarea</label>
-                </div>
-              </div>
-              <FlexRow>
-                <button
-                  className="btn waves-effect waves-light"
-                  type="submit"
-                  name="action"
-                  onClick={() => console.log('next')}
-                >
-                  Next Number
-                  <i className="material-icons right">skip_next</i>
-                </button>
-                <button
-                  className="btn waves-effect waves-light"
-                  type="submit"
-                  name="action"
-                  onClick={() => {
-                    console.log('previous');
-                  }}
-                >
-                  Previous Number
-                  <i className="material-icons left">skip_previous</i>
-                </button>
-              </FlexRow>
-            </form>
+                    {index === slides.currSlide && (
+                      <p>{fomattedPhoneNumber(slide, numberFormat)}</p>
+                    )}
+                  </div>
+                  {slides.nextSlide !== null && (
+                    <div
+                      className={
+                        index === slides.nextSlide && slides.change === 'Next'
+                          ? 'phoneNumber nextCall SlideFromOut'
+                          : index === slides.nextSlide &&
+                            slides.change === 'Prev'
+                          ? 'phoneNumber nextCall SlideFromCurrToNext'
+                          : index === slides.nextSlide
+                          ? 'phoneNumber nextCall'
+                          : 'phoneNumber'
+                      }
+                    >
+                      {index === slides.nextSlide && (
+                        <p>{fomattedPhoneNumber(slide, numberFormat)}</p>
+                      )}
+                    </div>
+                  )}
+                </Fragment>
+              );
+            })}
           </div>
-          <div className="col s12">
-            <div className="row"></div>
-          </div>
+
+          <NotesForm
+            phoneDetails={currentCall}
+            onChangePhoneDetails={(newValue) => {
+              setCurrentCall((prev) => {
+                return { ...prev, ...newValue };
+              });
+            }}
+            isLoading={isLoading}
+            onPhoneNumberChange={onPhoneNumberChange}
+            isNextNumberNull={slides.nextSlide === null}
+            isPrevNumberNull={slides.prevSlide === null}
+          />
+
+          {returnVisits ? <ReturnVisits callsArray={returnVisits} /> : null}
         </div>
       )}
     </>

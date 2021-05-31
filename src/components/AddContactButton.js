@@ -5,21 +5,21 @@ import '../styles/modalAnimation.css';
 
 import Button from './layout/Button';
 
-export default function AddPersonButton({ className, addPerson }) {
+export default function AddContactButton({ className, addContact }) {
   const [open, setOpen] = React.useState(false);
-  const [person, setPerson] = React.useState({});
+  // const [contact, setContact] = React.useState({});
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setOpen(false);
-    // addPerson(newPerson);
+    // addContact(newContact);
   };
 
   return (
     <div className={className}>
       <Button onClick={() => setOpen(true)} icon="add" />
       <Modal open={open} onClose={() => setOpen(false)}>
-        <h5>Adicionar pessoa</h5>
+        <h5>Adicionar Contato</h5>
         <form action="" onSubmit={handleSubmit}>
           <p>
             <label htmlFor="firstName">

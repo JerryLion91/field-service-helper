@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 export default function Button({
   onClick,
   icon,
-  className,
+  classNames,
   style,
   children,
   direction = 'left',
@@ -13,7 +13,7 @@ export default function Button({
 
   return (
     <a
-      className={`waves-effect waves btn-flat ${className}`}
+      className={`waves-effect waves ${classNames}`}
       style={style}
       onClick={onClick}
     >
